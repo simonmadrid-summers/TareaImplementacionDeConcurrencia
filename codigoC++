@@ -1,1 +1,67 @@
+#include <iostream>
+#include <thread>
+#include <queue>
+#include <mutex>
+#include <condition_variable>
 
+using namespace std;
+queue<int> buffer;
+mutex mutexBuffer;
+
+struct Semaforo {
+         mutex mtx; 
+         condition_variable cv;
+         int cont;
+         Semaforo(int inicio) {
+        cont = inicio;
+    }
+    void esperar() {
+        unique_lock<mutex> lock(mtx);
+        while (cont == 0) {
+            cv.wait(lock);
+            }
+        cont--;
+        }
+        void avisar() {
+        unique_lock<mutex> lock(mtx);
+        cont++;
+        cv.notify_one();
+    }  
+    };
+
+Semaforo espacios(5);
+Semaforo datos(0);
+    
+void sensor(int numero, int carros) {
+	espacios.esperar();
+      cout << "Sensor " << numero << " detecto " << carros << " carros" << endl;
+       mutexBuffer.lock();
+    buffer.push(carros);
+    mutexBuffer.unlock();
+
+     datos.avisar();
+}
+void consumidor(){
+for (int i = 0; i < 3; i++) {
+	datos.esperar();
+        mutexBuffer.lock();
+        int carros = buffer.front();
+        buffer.pop();
+        mutexBuffer.unlock();
+   cout<< "consumidor proceso"<<carros<<"carros"<<endl;
+espacios.avisar();
+}
+}
+int main() {
+	thread hilo4(consumidor);
+    thread hilo1(sensor, 1, 5);
+    thread hilo2(sensor, 2, 8);
+    thread hilo3(sensor, 3, 3);
+
+    hilo1.join();
+    hilo2.join();
+    hilo3.join();
+    hilo4.join();
+
+    return 0;
+}
