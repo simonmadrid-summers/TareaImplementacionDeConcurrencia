@@ -1,1 +1,1 @@
-# Tarea.-Implementaci-n-de-concurrencia-en-m-dulos
+Implementacion-de-concurrencia-en-modulos
